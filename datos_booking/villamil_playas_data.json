@@ -1,0 +1,38 @@
+{
+  "destino": "Villamil Playas",
+  "periodo": {
+    "checkin": "2025-12-01",
+    "checkout": "2025-12-31",
+    "temporada": "alta",
+    "descripcion": "Período completo diciembre"
+  },
+  "fecha_scraping": "2025-11-10T19:35:39.243453",
+  "total_alojamientos": 1,
+  "alojamientos": [
+    {
+      "nombre": "Complejo turístico colimes",
+      "tipo_alojamiento": "N/A",
+      "precio": "US$765",
+      "url": "https://www.booking.com/hotel/ec/complejo-turistico-colimes.es.html?aid=304142&label=mkt123sc-50f2943c-1683-4b1a-925d-57616aa9ece1&ucfs=1&arphpl=1&checkin=2025-12-01&checkout=2025-12-31&dest_id=-929409&dest_type=city&group_adults=2&req_adults=2&no_rooms=1&group_children=0&req_children=0&hpos=1&hapos=1&sr_order=popularity&srpvid=db7d54bd53e5e9830761011fe5acb962&srepoch=1762821311&all_sr_blocks=1325358101_405149507_2_1_0&highlighted_blocks=1325358101_405149507_2_1_0&matching_block_id=1325358101_405149507_2_1_0&sr_pri_blocks=1325358101_405149507_2_1_0__76500&from=searchresults",
+      "puntuacion_general": "N/A",
+      "numero_resenas": "0",
+      "distancia_centro": "a 23,6 km de Infancia",
+      "caracteristicas": "N/A",
+      "politica_cancelacion": "N/A",
+      "disponibilidad": "Disponible",
+      "descripcion": "Complejo turístico colimes dispone de alojamiento en Balzar. Hay vistas a la piscina.\n\nEn el hostal o pensión, cada habitación incluye armario. En Complejo turístico colimes, cada habitación dispone de aire acondicionado y baño privado.\n\nEn el alojamiento se sirve un desayuno a la carta.\n\nEl aeropuerto (Aeropuerto internacional José Joaquín de Olmedo) está a 93 km.",
+      "ubicacion_coordenadas": "-1.5439082704423,-80.0109377397875",
+      "servicios": [
+        "Parking gratis",
+        "Parking gratis",
+        "Desayuno",
+        "Desayuno",
+        "Ver los 8 servicios",
+        "Ver los 8 servicios"
+      ],
+      "calificaciones_detalladas": {},
+      "politicas": {},
+      "resenas": []
+    }
+  ]
+}

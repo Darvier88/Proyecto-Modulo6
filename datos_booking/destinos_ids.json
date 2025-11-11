@@ -1,0 +1,30 @@
+{
+    "General Villamil": {
+        "dest_id": "-932017",
+        "dest_type": "city"
+    },
+    "Salinas": {
+        "dest_id": "-932937",
+        "dest_type": "city"
+    },
+    "Montañita": {
+        "dest_id": "-930965",
+        "dest_type": "city"
+    },
+    "Puerto López": {
+        "dest_id": "-932301",
+        "dest_type": "city"
+    },
+    "Ayampe": {
+        "dest_id": "-924536",
+        "dest_type": "city"
+    },
+    "Manta": {
+        "dest_id": "-930612",
+        "dest_type": "city"
+    },
+    "Atacames": {
+        "dest_id": "-924479",
+        "dest_type": "city"
+    }
+}
