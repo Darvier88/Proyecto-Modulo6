@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Análisis de Destinos Turísticos</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      min-height: 100vh;
+      color: #e2e8f0;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      padding: 30px 20px;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      border-radius: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3);
+    }
+    .header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; }
+    .header p { opacity: 0.9; font-size: 0.95rem; }
+    .grid { display: grid; gap: 20px; margin-bottom: 20px; }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .card {
+      background: rgba(30, 41, 59, 0.8);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+    }
+    .card h3 {
+      font-size: 0.95rem;
+      color: #94a3b8;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h3::before {
+      content: '';
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 2px;
+    }
+    .ranking-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      margin-bottom: 8px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      transition: transform 0.2s;
+    }
+    .ranking-item:hover { transform: translateX(5px); }
+    .rank {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      margin-right: 12px;
+      font-size: 0.9rem;
+    }
+    .rank-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; }
+    .rank-2 { background: linear-gradient(135deg, #9ca3af, #6b7280); color: #000; }
+    .rank-3 { background: linear-gradient(135deg, #d97706, #b45309); color: #fff; }
+    .rank-other { background: rgba(100,116,139,0.3); color: #94a3b8; }
+    .ranking-info { flex: 1; }
+    .ranking-name { font-weight: 600; font-size: 0.95rem; }
+    .ranking-score { font-size: 1.1rem; font-weight: 700; color: #3b82f6; }
+    .progress-bar {
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    }
+    .chart-container { position: relative; height: 260px; }
+    .chart-container-lg { position: relative; height: 300px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tab {
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.05);
+      border: none;
+      border-radius: 8px;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .tab:hover, .tab.active { background: #3b82f6; color: #fff; }
+    .detail-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .detail-table th, .detail-table td { padding: 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .detail-table th { color: #94a3b8; font-weight: 500; }
+    .detail-table td { color: #e2e8f0; }
+    .highlight { color: #3b82f6; font-weight: 600; }
+    .formula {
+      background: rgba(59,130,246,0.1);
+      border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #93c5fd;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🏖️ Análisis de Destinos Turísticos</h1>
+    <p>Evaluación comparativa de capacidad hospitalaria, nivel de hospitalidad y relación calidad-precio</p>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Ranking Final de Destinos</h3>
+      <div class="formula">Score = 0.4×CH + 0.3×NH + 0.2×RCP</div>
+      <div id="ranking"></div>
+    </div>
+    <div class="card">
+      <h3>Comparativa de Indicadores por Destino</h3>
+      <div class="chart-container-lg"><canvas id="barChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Mix de Categorías de Precio por Destino</h3>
+      <div class="chart-container-lg"><canvas id="stackedBar"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Componentes de Capacidad Hospitalaria (CH)</h3>
+      <div class="formula">CH = 0.4×TA + 0.25×DC + 0.25×PC + 0.1×SC</div>
+      <div class="chart-container"><canvas id="chChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Componentes del Nivel de Hospitalidad (NH)</h3>
+      <div class="formula">NH = 0.30×RP + 0.15×MR + 0.30×HF + 0.25×HES</div>
+      <div class="chart-container"><canvas id="nhChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Servicios Críticos por Destino (SC)</h3>
+      <div class="chart-container-lg"><canvas id="scChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Comparativa Radar - Top 4 Destinos</h3>
+      <div class="chart-container-lg"><canvas id="radarChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Detalle por Indicador</h3>
+      <div class="tabs" id="tabsContainer"></div>
+      <div id="tableContainer"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Heatmap de Indicadores</h3>
+    <div class="chart-container-lg"><canvas id="heatmap"></canvas></div>
+  </div>
+
+  <script>
+    const data = {
+      ranking: [
+        { destino: "Ayampe", CH: 0.824, NH: 0.685, RCP: 0.418, Score: 0.619 },
+        { destino: "Salinas", CH: 0.299, NH: 0.886, RCP: 0.745, Score: 0.534 },
+        { destino: "Puerto López", CH: 0.303, NH: 0.903, RCP: 0.438, Score: 0.480 },
+        { destino: "Montañita", CH: 0.504, NH: 0.599, RCP: 0.429, Score: 0.467 },
+        { destino: "General Villamil", CH: 0.346, NH: 0.581, RCP: 0.409, Score: 0.394 },
+        { destino: "Manta", CH: 0.621, NH: 0.020, RCP: 0.284, Score: 0.311 },
+        { destino: "Atacames", CH: 0.337, NH: 0.388, RCP: 0.034, Score: 0.258 }
+      ],
+      categories: {
+        labels: ["Atacames", "Ayampe", "General Villamil", "Manta", "Montañita", "Puerto López", "Salinas"],
+        accesible: [0.36, 0.33, 0.30, 0.30, 0.32, 0.33, 0.38],
+        estandar: [0.24, 0.35, 0.37, 0.35, 0.36, 0.33, 0.24],
+        premium: [0.40, 0.32, 0.33, 0.35, 0.32, 0.34, 0.38]
+      },
+      ch: [
+        { destino: "Ayampe", TA: 63, DC: 0.873, PC: 0.676, SC: 0.333 },
+        { destino: "Manta", TA: 40, DC: 0.850, PC: 1.000, SC: 0.258 },
+        { destino: "Montañita", TA: 47, DC: 0.894, PC: 0.000, SC: 0.333 },
+        { destino: "General Villamil", TA: 27, DC: 0.815, PC: 0.265, SC: 0.506 },
+        { destino: "Atacames", TA: 25, DC: 0.600, PC: 0.949, SC: 0.587 },
+        { destino: "Puerto López", TA: 30, DC: 0.800, PC: 0.214, SC: 0.344 },
+        { destino: "Salinas", TA: 29, DC: 0.724, PC: 0.416, SC: 0.414 }
+      ],
+      sc: [
+        { destino: "Atacames", value: 0.587 },
+        { destino: "General Villamil", value: 0.506 },
+        { destino: "Salinas", value: 0.414 },
+        { destino: "Puerto López", value: 0.344 },
+        { destino: "Ayampe", value: 0.333 },
+        { destino: "Montañita", value: 0.333 },
+        { destino: "Manta", value: 0.258 }
+      ],
+      nh: [
+        { destino: "Puerto López", RP: 8.42, MR: 8.80, HF: 3.66, HES: 3.07 },
+        { destino: "Salinas", RP: 8.73, MR: 8.80, HF: 3.50, HES: 3.07 },
+        { destino: "Ayampe", RP: 8.41, MR: 8.70, HF: 3.54, HES: 3.04 },
+        { destino: "Montañita", RP: 8.32, MR: 8.55, HF: 3.52, HES: 3.05 },
+        { destino: "General Villamil", RP: 8.53, MR: 8.75, HF: 3.24, HES: 3.05 },
+        { destino: "Atacames", RP: 8.38, MR: 8.70, HF: 3.20, HES: 3.02 },
+        { destino: "Manta", RP: 7.78, MR: 8.50, HF: 3.24, HES: 2.98 }
+      ],
+      rcp: [
+        { destino: "Salinas", PPC: 3892, PVR: 0.0035, DP: 3573 },
+        { destino: "Puerto López", PPC: 3173, PVR: 0.0046, DP: 1862 },
+        { destino: "Montañita", PPC: 3177, PVR: 0.0043, DP: 2314 },
+        { destino: "Ayampe", PPC: 3098, PVR: 0.0047, DP: 2003 },
+        { destino: "General Villamil", PPC: 3506, PVR: 0.0032, DP: 2821 },
+        { destino: "Manta", PPC: 3245, PVR: 0.0038, DP: 1848 },
+        { destino: "Atacames", PPC: 3162, PVR: 0.0028, DP: 1863 }
+      ]
+    };
+
+    const colors = ['#3b82f6','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899'];
+    const destinos = data.ranking.map(d => d.destino);
+    const chartDefaults = { responsive: true, maintainAspectRatio: false };
+
+    // Ranking
+    const rankingEl = document.getElementById('ranking');
+    data.ranking.forEach((d, i) => {
+      const rankClass = i < 3 ? `rank-${i+1}` : 'rank-other';
+      const pct = (d.Score / 0.62 * 100).toFixed(0);
+      rankingEl.innerHTML += `
+        <div class="ranking-item">
+          <div class="rank ${rankClass}">${i+1}</div>
+          <div class="ranking-info">
+            <div class="ranking-name">${d.destino}</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+          </div>
+          <div class="ranking-score">${d.Score.toFixed(3)}</div>
+        </div>`;
+    });
+
+    // Bar Chart - Comparativa
+    new Chart(document.getElementById('barChart'), {
+      type: 'bar',
+      data: {
+        labels: destinos,
+        datasets: [
+          { label: 'CH', data: data.ranking.map(d=>d.CH), backgroundColor: '#3b82f6' },
+          { label: 'NH', data: data.ranking.map(d=>d.NH), backgroundColor: '#8b5cf6' },
+          { label: 'RCP', data: data.ranking.map(d=>d.RCP), backgroundColor: '#06b6d4' }
+        ]
+      },
+      options: { ...chartDefaults, plugins: { legend: { labels: { color: '#94a3b8' }}}, scales: { x: { ticks: { color: '#94a3b8', font: { size: 10 }}}, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.1)' }}}}
+    });
+
+    // Stacked Bar - Categorías de precio
+    new Chart(document.getElementById('stackedBar'), {
+      type: 'bar',
+      data: {
+        labels: data.categories.labels,
+        datasets: [
+          { label: 'Accesible', data: data.categories.accesible, backgroundColor: '#10b981' },
+          { label: 'Estándar', data: data.categories.estandar, backgroundColor: '#f59e0b' },
+          { label: 'Premium', data: data.categories.premium, backgroundColor: '#ef4444' }
+        ]
+      },
+      options: { ...chartDefaults, plugins: { legend: { labels: { color: '#94a3b8' }}}, scales: { x: { stacked: true, ticks: { color: '#94a3b8', font: { size: 10 }}}, y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.1)' }}}}
+    });
+
+    // CH Components
+    const chDestinos = data.ch.map(d => d.destino);
+    new Chart(document.getElementById('chChart'), {
+      type: 'bar',
+      data: {
+        labels: chDestinos,
+        datasets: [
+          { label: 'TA (norm)', data: data.ch.map(d => d.TA/63), backgroundColor: '#3b82f6' },
+          { label: 'DC', data: data.ch.map(d => d.DC), backgroundColor: '#8b5cf6' },
+          { label: 'PC', data: data.ch.map(d => d.PC), backgroundColor: '#06b6d4' },
+          { label: 'SC', data: data.ch.map(d => d.SC), backgroundColor: '#10b981' }
+        ]
+      },
+      options: { ...chartDefaults, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 }}}}, scales: { x: { ticks: { color: '#94a3b8', font: { size: 9 }}}, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.1)' }}}}
+    });
+
+    // NH Components
+    new Chart(document.getElementById('nhChart'), {
+      type: 'bar',
+      data: {
+        labels: data.nh.map(d => d.destino),
+        datasets: [
+          { label: 'RP (÷10)', data: data.nh.map(d => d.RP/10), backgroundColor: '#3b82f6' },
+          { label: 'MR (÷10)', data: data.nh.map(d => d.MR/10), backgroundColor: '#8b5cf6' },
+          { label: 'HF (÷5)', data: data.nh.map(d => d.HF/5), backgroundColor: '#06b6d4' },
+          { label: 'HES (÷5)', data: data.nh.map(d => d.HES/5), backgroundColor: '#10b981' }
+        ]
+      },
+      options: { ...chartDefaults, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 }}}}, scales: { x: { ticks: { color: '#94a3b8', font: { size: 9 }}}, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.1)' }}}}
+    });
+
+    // SC Horizontal Bar
+    new Chart(document.getElementById('scChart'), {
+      type: 'bar',
+      data: {
+        labels: data.sc.map(d => d.destino),
+        datasets: [{ label: 'Proporción SC', data: data.sc.map(d => d.value), backgroundColor: '#0d9488', borderRadius: 4 }]
+      },
+      options: { ...chartDefaults, indexAxis: 'y', plugins: { legend: { display: false }}, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.1)' }}, y: { ticks: { color: '#94a3b8' }}}}
+    });
+
+    // Radar
+    new Chart(document.getElementById('radarChart'), {
+      type: 'radar',
+      data: {
+        labels: ['CH', 'NH', 'RCP'],
+        datasets: data.ranking.slice(0,4).map((d,i) => ({
+          label: d.destino,
+          data: [d.CH, d.NH, d.RCP],
+          borderColor: colors[i],
+          backgroundColor: colors[i] + '33',
+          pointBackgroundColor: colors[i]
+        }))
+      },
+      options: { ...chartDefaults, scales: { r: { ticks: { color: '#94a3b8', backdropColor: 'transparent' }, grid: { color: 'rgba(255,255,255,0.1)' }, pointLabels: { color: '#e2e8f0', font: { size: 12 }}}}, plugins: { legend: { labels: { color: '#94a3b8' }}}}
+    });
+
+    // Heatmap (simulated with bar)
+    new Chart(document.getElementById('heatmap'), {
+      type: 'bar',
+      data: {
+        labels: destinos,
+        datasets: [
+          { label: 'CH', data: data.ranking.map(d=>d.CH), backgroundColor: 'rgba(59,130,246,0.8)' },
+          { label: 'NH', data: data.ranking.map(d=>d.NH), backgroundColor: 'rgba(139,92,246,0.8)' },
+          { label: 'RCP', data: data.ranking.map(d=>d.RCP), backgroundColor: 'rgba(6,182,212,0.8)' },
+          { label: 'Score Final', data: data.ranking.map(d=>d.Score), backgroundColor: 'rgba(16,185,129,0.8)' }
+        ]
+      },
+      options: { ...chartDefaults, plugins: { legend: { labels: { color: '#94a3b8' }}}, scales: { x: { ticks: { color: '#94a3b8' }}, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.1)' }}}}
+    });
+
+    // Tabs - Fixed event handling
+    const tabsContainer = document.getElementById('tabsContainer');
+    const tableContainer = document.getElementById('tableContainer');
+    const tabTypes = ['ch', 'nh', 'rcp'];
+    const tabLabels = ['CH', 'NH', 'RCP'];
+
+    tabTypes.forEach((type, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'tab' + (idx === 0 ? ' active' : '');
+      btn.textContent = tabLabels[idx];
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        showTable(type);
+      });
+      tabsContainer.appendChild(btn);
+    });
+
+    function showTable(type) {
+      const cols = type === 'ch' ? ['Destino','TA','DC','PC','SC'] : type === 'nh' ? ['Destino','RP','MR','HF','HES'] : ['Destino','PPC','PVR','DP'];
+      let html = '<table class="detail-table"><thead><tr>';
+      cols.forEach(c => html += `<th>${c}</th>`);
+      html += '</tr></thead><tbody>';
+      data[type].forEach(row => {
+        html += '<tr>';
+        Object.values(row).forEach((v,i) => {
+          const formatted = typeof v === 'number' ? (v > 10 ? v.toFixed(0) : v.toFixed(3)) : v;
+          html += `<td class="${i===0?'highlight':''}">${formatted}</td>`;
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      tableContainer.innerHTML = html;
+    }
+    showTable('ch');
+  </script>
+</body>
+</html>
